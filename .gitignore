@@ -1,0 +1,6 @@
+client
+client.o
+protocol.o
+server
+server.o
+split.o

@@ -47,13 +47,16 @@ int main(int argc, char * argv[]) {
 		port = DEFAULT_PORT;
 	}
 
-	//TODO implementar!
+	// Limbiar la estructura del manejador
+    memset(&act, 0, sizeof(struct sigaction));
 	//Configurar e instalar el manejador de la señal
-	// Se debe instalar los manejadores para las señales:
-	// SIGINT
-	// SIGHUP
-	// SIGTERM
-	//Se puede usar la misma estructura para todas las señales.
+	act.sa_handler = signal_handler;
+	// Interrupcion de teclado
+    sigaction(SIGINT, & act, NULL);
+    // Cerrar la terminal
+    sigaction(SIGHUP, & act, NULL);
+    // Apagar el computador
+    sigaction(SIGTERM, & act, NULL);
 
 	// Bandera para indicar la terminacion del programa
 	finished = 0;
@@ -197,6 +200,20 @@ int main(int argc, char * argv[]) {
 }
 
 void signal_handler(int sig) {
+	if (sig == SIGINT)
+    {
+        printf("\nInterrupcion de teclado!\n");
+    }else if (sig == SIGHUP)
+    {
+        printf("\nTerminal cerrada!\n");
+    }else if (sig == SIGTERM)
+    {
+        printf("\nFuimonos!\n");
+    }else {
+        printf("\nSeñal %d recibida\n",sig);
+    }
+    
+    // Informar que el servidor esta terminando
 	finished = 1;
 #ifdef DEBUG
 	fprintf(stderr, "Signal received, finishing\n");
