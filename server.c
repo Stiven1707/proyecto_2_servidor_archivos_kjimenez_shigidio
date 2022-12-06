@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
 	nclients = 0;	// Cantidad actual de clientes
 	clients = NULL; // Arreglo de clientes, comienza en nulo
 
-	// Limbio la estructura del manejador
+	// Limpio la estructura del manejador
     memset(&act, 0, sizeof(struct sigaction));
 	// Configurar e instalar el manejador de la señal
     act.sa_handler = signal_handler;
@@ -421,9 +421,11 @@ void signal_handler(int sig)
     // Informar que el servidor esta terminando
 	finished = 1;
 
-	
-	// TODO implementar!
 	// Recorrer el arreglo de clientes, cerrando cada uno de los sockets activos
+	for (int i = 0; i < nclients; i++)
+	{
+		close(clients[i].socket);
+	}
 	// Liberar el arreglo de clientes
 	free(clients);
 	printf("Server finished.\n");
@@ -433,13 +435,27 @@ void signal_handler(int sig)
 response_code register_transfer(client *c, char *filename, char *message)
 {
 	response_code code;
-	code = TRANSFER_DENIED;
-
-	// TODO Borrar cuando la logica este implementada
-	strcpy(message, "TODO implementar!");
+	code = TRANSFER_AUTHORIZED;
 
 	// TODO Implementar!
-
+	for (int i = 0; i < nclients; i++)
+	{
+		if (clients->socket>0)
+		{
+			if (EQUALS(filename,clients->active_transfer))
+			{
+				strcpy("TRANSFER_DENIED!",message);
+				code = TRANSFER_DENIED;
+			}
+			
+		}		
+	}
+	if (code==TRANSFER_AUTHORIZED)
+	{
+		strcpy("TRANSFER_AUTHORIZED!",message);
+		strcpy(c->active_transfer,filename);
+	}
+	
 	// Buscar en el arreglo de clientes activos (socket > 0) diferentes al
 	// cliente actual, si el nom bre de la transferencia activa (active_transfer) es igual
 	// al nombre del archivo que este cliente desea transferir
@@ -457,4 +473,5 @@ void finalize_transfer(client *c)
 {
 	// TODO implementar!
 	// Limpiar el nombre de la transferencia activa
+    memset(&c->active_transfer, 0, sizeof(char)*NAME_MAX);
 }
