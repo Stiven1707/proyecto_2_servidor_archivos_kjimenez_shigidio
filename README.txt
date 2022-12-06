@@ -1,4 +1,5 @@
-Elaborado por: Erwin Meza Vega <emezav@unicauca.edu.co>
+Elaborado por: Kevin Stiven Jimenez Perafan <kjimnez@unicauca.edu.co>
+               Steben David Higidio Higidio <shigidio@unicauca.edu.co>
 
 Se deberá desarrollar dos programas en C que implementen la funcionali-
 dad para enviar y recibir archivos a través de la red. Uno de los dos extremos
