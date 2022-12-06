@@ -11,23 +11,26 @@
 
 #include "protocol.h"
 
-int receive_file_info(int s, file_info * info) {
+int receive_file_info(int s, file_info *info)
+{
 	int nread;
 	nread = read(s, info, sizeof(file_info));
 	return (nread == sizeof(file_info));
 }
 
-int send_file_info(int s, file_info * info) {
+int send_file_info(int s, file_info *info)
+{
 	int nwritten;
 	nwritten = write(s, info, sizeof(file_info));
 	return (nwritten == sizeof(file_info));
 }
 
-int receive_file(int s, char * destination_folder) {
+int receive_file(int s, char *destination_folder)
+{
 
 	// Recibe un archivo de un socket y lo almacena en destination_folder
 
-	// Primero se debe leer el socket el encabezado (de tipo file_info) 
+	// Primero se debe leer el socket el encabezado (de tipo file_info)
 	// que contiene la informacion del archivo:
 
 	// info.filename = nombre del archivo
@@ -38,7 +41,7 @@ int receive_file(int s, char * destination_folder) {
 
 	// Luego se lee el contenido del archivo en bloques de BUFSIZ.
 
-	// Se debe tener en cuenta que el ultimo bloque (o el primero y unico, si el 
+	// Se debe tener en cuenta que el ultimo bloque (o el primero y unico, si el
 	// tamaño es menor que BUFSIZ) va a contener nulos al final que no deben ser
 	// escritos en el archivo de salida.
 
@@ -46,18 +49,31 @@ int receive_file(int s, char * destination_folder) {
 
 	// 1. Leer la informacion del archivo desde el socket (estructura file_info)
 	// receive_file_info(s, &info) //TODO validar!
+	file_info *info;
+	if (!receive_file_info(s, &info))
+	{
+		perror("No se recibio el encabezado...");
+	}
 
 	// 2. Crear la ruta en la cual se almacena el archivo:
-	//	  destination_folder + "/" + file_info.filename 
+	char *ruta;
+
+	//	  destination_folder + "/" + file_info.filename
 	//    El modo se encuentra en file_info.mode
 	//  ruta=malloc(...)
-	//  strcpy(ruta, destination_folder)
-	//  strcat(ruta, "/")
-	//  strcat(ruta, info.filename)
+	ruta = (char *)malloc(strlen(destination_folder) + strlen(info->filename) + 2);
+	strcpy(ruta, destination_folder);
+	strcat(ruta, "/");
+	strcat(ruta, info->filename);
 
 	// 3. Abrir el archivo de salida
-	// dst_fd = open(ruta, O_CREAT | O_WRONLY | O_TRUNC, info.mode) //TODO validar!
-
+	FILE *dst_fd;
+	dst_fd = open(ruta, O_CREAT | O_WRONLY | O_TRUNC, info->mode); //TODO validar!
+	if (dst_fd!=NULL)
+	{
+		/* code */
+	}
+	
 	// Leer el contenido del archivo.
 	// La transferencia se realiza en bloques de BUFSIZ bytes
 	// Se debe prestar atencion al ultimo bloque, ya que puede ser
@@ -84,17 +100,18 @@ int receive_file(int s, char * destination_folder) {
 	// 6. Retornar OK
 	// return 1
 
-	//TODO implementar!
+	// TODO implementar!
 	return 0;
 }
 
-int send_file(int s, char * path) {
+int send_file(int s, char *path)
+{
 
 	// Verificar si el archivo existe
-	// Si el archivo no existe, enviar un encabezado (file_info) 
+	// Si el archivo no existe, enviar un encabezado (file_info)
 	// con size = -1 y retornar 0
 
-  // Si el archivo existe y es un archivo regular,
+	// Si el archivo existe y es un archivo regular,
 	// enviar primero el encabezado con la informacion del archivo:
 	// info.size = tamaño del archio
 	// info.filename = nombre el archivo (sin directorio)
@@ -130,7 +147,7 @@ int send_file(int s, char * path) {
 	//  retornar 0 (falso)
 	// fin si
 
-  // 4. Llenar los atributos del encabezado
+	// 4. Llenar los atributos del encabezado
 	// info.filename = filenane
 	// info.size = stat_s.st_size
 	// info.mode = stat_s.st_mode
@@ -154,10 +171,10 @@ int send_file(int s, char * path) {
 	//			si a_leer > faltantes // Ultimo bloque
 	//				a_leer = faltantes
 	//			fin si
-	//      // Leer un bloque del archivo  
+	//      // Leer un bloque del archivo
 	//			n_leidos = read(src_fd, buf, a_leer) //TODO validar!
 	//		  si n_leidos > 0
-  //        //Enviar el bloque al socket
+	//        //Enviar el bloque al socket
 	//				n_escritos = write(s, buf, n_leidos) //TODO validar!
 	//      fin si
 	//			faltaltes = faltantes - n_leidos
@@ -167,17 +184,20 @@ int send_file(int s, char * path) {
 	// 10. Retornar OK
 	// return 1
 
-	//TODO implementar!
+	// TODO implementar!
 	return 0;
 }
 
-int file_exists(char * path) {
+int file_exists(char *path)
+{
 	struct stat s;
 
-	if (stat(path, &s) != 0
-		  || !S_ISREG(s.st_mode)) {
+	if (stat(path, &s) != 0 || !S_ISREG(s.st_mode))
+	{
 		return 0;
-	}else {
+	}
+	else
+	{
 		return 1;
 	}
 }
