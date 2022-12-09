@@ -80,8 +80,12 @@ int receive_file(int s, char *destination_folder)
 	// En caso que el archivo sea pequeño, la transferencia se realizara en una
 	// sola lectura
 	dst_fd = open(ruta, O_CREAT | O_WRONLY | O_TRUNC, info->mode); // TODO validar!
-	if (dst_fd != -1)
+	if (dst_fd != 0)
 	{
+		return 0;
+		
+	}
+	else
 		// 4. faltantes = tamaño del archivo a recibir (tomado de la estructura file_info)
 		faltantes = info->size;
 		// 4.1 Mientras faltantes > 0
@@ -116,10 +120,6 @@ int receive_file(int s, char *destination_folder)
 			faltantes = faltantes - n_leidos;
 			//     Fin Mientras
 		}
-	}
-	else
-		// 7 Retornar fallo!
-		return 0;
 	// 5. Cerrar el archivo
 	// close(dst_fd)
 	close(dst_fd);
