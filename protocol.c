@@ -80,10 +80,9 @@ int receive_file(int s, char *destination_folder)
 	// En caso que el archivo sea pequeño, la transferencia se realizara en una
 	// sola lectura
 	dst_fd = open(ruta, O_CREAT | O_WRONLY | O_TRUNC, info->mode); // TODO validar!
-	if (dst_fd == 0)
+	if (dst_fd < 0)
 	{
-		return 0;
-		
+		return 0;	
 	}
 	else
 		// 4. faltantes = tamaño del archivo a recibir (tomado de la estructura file_info)
