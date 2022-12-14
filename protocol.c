@@ -30,7 +30,7 @@ int receive_file(int s, char *destination_folder)
 	char buff[BUFSIZ];
 	size_t n_leidos;
 	size_t n_escritos;
-	file_info *info;
+	file_info info;
 	char *ruta;
 	int dst_fd;
 	int faltantes;
@@ -56,7 +56,7 @@ int receive_file(int s, char *destination_folder)
 	// 1. Leer la informacion del archivo desde el socket (estructura file_info)
 	// receive_file_info(s, info) //TODO validar!
 
-	if (!receive_file_info(s, info))
+	if (!receive_file_info(s, &info))
 	{
 		perror("No se recibio el encabezado...");
 	}
@@ -66,11 +66,23 @@ int receive_file(int s, char *destination_folder)
 	//	  destination_folder + "/" + file_info.filename
 	//    El modo se encuentra en file_info.mode
 	//  ruta=malloc(...)
-	ruta = (char *)malloc(strlen(destination_folder) + strlen(info->filename) + 2);
+	if (!dir_exists(destination_folder))
+	{
+		if (mkdir(destination_folder, 0755) < 0)
+		{
+			fprintf(stderr, "No se pudo crear el directorio %s\n", destination_folder);
+			return 0;
+		}
+	}
+
+	ruta = (char *)malloc(strlen(destination_folder) + strlen(info.filename) + 2);
 	strcpy(ruta, destination_folder);
 	strcat(ruta, "/");
-	strcat(ruta, info->filename);
-
+	strcat(ruta, info.filename);
+#ifdef DEBUG
+			//
+			printf("ruta donde recibo  %s\n", ruta);
+#endif
 	// 3. Abrir el archivo de salida
 
 	// Leer el contenido del archivo.
@@ -79,46 +91,64 @@ int receive_file(int s, char *destination_folder)
 	// de tamaño menor.
 	// En caso que el archivo sea pequeño, la transferencia se realizara en una
 	// sola lectura
-	dst_fd = open(ruta, O_CREAT | O_WRONLY | O_TRUNC, info->mode); // TODO validar!
+	dst_fd = open(ruta, O_CREAT | O_WRONLY | O_TRUNC, info.mode); // TODO validar!
 	if (dst_fd < 0)
 	{
-		return 0;	
+#ifdef DEBUG
+		//
+		fprintf(stderr, "Error abriendo %s\n", ruta);
+#endif
+		return 0;
 	}
-	else
-		// 4. faltantes = tamaño del archivo a recibir (tomado de la estructura file_info)
-		faltantes = info->size;
-		// 4.1 Mientras faltantes > 0
-		while (faltantes > 0)
+	// 4. faltantes = tamaño del archivo a recibir (tomado de la estructura file_info)
+	faltantes = info.size;
+#ifdef DEBUG
+	//
+	printf("Cantidad recibida %d\n", faltantes);
+#endif
+	// 4.1 Mientras faltantes > 0
+	while (faltantes > 0)
+	{
+		int a_leer = BUFSIZ;
+		//			si a_leer > faltantes // Ultimo bloque
+		//				a_leer = faltantes
+		//			fin si
+		if (a_leer > faltantes)
 		{
-			int a_leer = BUFSIZ;
-			//			si a_leer > faltantes // Ultimo bloque
-			//				a_leer = faltantes
-			//			fin si
-			if (a_leer > faltantes)
-			{
-				a_leer = faltantes;
-			}
-			//      // Leer un bloque del socket
-			//			n_leidos = read(s, buf, a_leer) //TODO validar!
-			n_leidos = read(s, buff, a_leer);
-			//		  si n_leidos > 0
-			if (n_leidos > 0)
-			{
-				//       // Escribir el bloque al archivo
-				//				n_escritos = write(dst_fd, buf, n_leidos) //TODO validar!
-				n_escritos = write(dst_fd, buff, n_leidos);
-				if (n_escritos != n_leidos)
-				{
-					fprintf(stderr,"Error la cantidad escrita %d es diferente a la leida %d",n_escritos,n_leidos);
-				}
-				
-			}
-			//      fin si
-
-			//			faltaltes = faltantes - n_leidos
-			faltantes = faltantes - n_leidos;
-			//     Fin Mientras
+			a_leer = faltantes;
 		}
+		//      // Leer un bloque del socket
+		//			n_leidos = read(s, buf, a_leer) //TODO validar!
+		n_leidos = read(s, buff, a_leer);
+#ifdef DEBUG
+		//
+		printf("Cantidad leida %d\n", n_leidos);
+#endif
+		//		  si n_leidos > 0
+		if (n_leidos > 0)
+		{
+			//       // Escribir el bloque al archivo
+			//				n_escritos = write(dst_fd, buf, n_leidos) //TODO validar!
+			n_escritos = write(dst_fd, buff, n_leidos);
+#ifdef DEBUG
+			//
+			printf("Cantidad escrita %d\n", n_escritos);
+#endif
+			if (n_escritos != n_leidos)
+			{
+				fprintf(stderr, "Error la cantidad escrita %d es diferente a la leida %d", n_escritos, n_leidos);
+			}
+		}
+		//      fin si
+
+		//			faltaltes = faltantes - n_leidos
+		faltantes = faltantes - n_leidos;
+#ifdef DEBUG
+		//
+		printf("Cantidad faltante %d\n", faltantes);
+#endif
+		//     Fin Mientras
+	}
 	// 5. Cerrar el archivo
 	// close(dst_fd)
 	close(dst_fd);
@@ -132,7 +162,7 @@ int send_file(int s, char *path)
 {
 	size_t n_leidos;
 	size_t n_escritos;
-	file_info *info;
+	file_info info;
 	char buff[BUFSIZ];
 	char *filename;
 	char *ruta;
@@ -175,8 +205,8 @@ int send_file(int s, char *path)
 	// fin si
 	if (ruta == NULL)
 	{
-		info->size = -1;
-		if (!send_file_info(s, info))
+		info.size = -1;
+		if (!send_file_info(s, &info))
 		{
 			perror("Error no se pudo enviar la informacion del archivo");
 		}
@@ -190,8 +220,8 @@ int send_file(int s, char *path)
 		//  info.size = -1
 		//  send_file_info(s, info) // TODO validar!
 		//  retornar 0 (falso)
-		info->size = -1;
-		if (!send_file_info(s, info))
+		info.size = -1;
+		if (!send_file_info(s, &info))
 		{
 			perror("Error no se pudo enviar la informacion del archivo");
 		}
@@ -202,16 +232,16 @@ int send_file(int s, char *path)
 	// 4. Llenar los atributos del encabezado
 
 	// info.filename = filenane
-	strcpy(info->filename, filename);
+	strcpy(info.filename, filename);
 	// info.size = stat_s.st_size
-	info->size = st.st_size;
+	info.size = st.st_size;
 	// info.mode = stat_s.st_mode
-	info->mode = st.st_mode;
+	info.mode = st.st_mode;
 
 	// 5. Enviar el encabezado
 
 	// send_file_info(s, info)  //TODO validar!
-	if (!send_file_info(s, info))
+	if (!send_file_info(s, &info))
 	{
 		perror("Error no se pudo enviar la informacion del archivo");
 	}
@@ -250,7 +280,7 @@ int send_file(int s, char *path)
 				n_escritos = write(s, buff, n_leidos);
 				if (n_escritos != n_leidos)
 				{
-					fprintf(stderr,"Error la cantidad escrita %d es diferente a la leida %d",n_escritos,n_leidos);
+					fprintf(stderr, "Error la cantidad escrita %d es diferente a la leida %d", n_escritos, n_leidos);
 				}
 			}
 			//      fin si
@@ -276,6 +306,19 @@ int file_exists(char *path)
 	struct stat s;
 
 	if (stat(path, &s) != 0 || !S_ISREG(s.st_mode))
+	{
+		return 0;
+	}
+	else
+	{
+		return 1;
+	}
+}
+int dir_exists(char *path)
+{
+	struct stat s;
+
+	if (stat(path, &s) != 0 || !S_ISDIR(s.st_mode))
 	{
 		return 0;
 	}

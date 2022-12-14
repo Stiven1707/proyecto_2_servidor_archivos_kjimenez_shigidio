@@ -85,5 +85,12 @@ int send_file(int s, char * path);
 * @return 1 si el archivo existe, 0 en caso contrario
 */
 int file_exists(char * path);
+/**
+ * @brief Verifica si la carpeta existe
+ * 
+ * @param path ruta de la carpeta
+ * @return int 1 si existe y es un carpeta y 0 de lo contrario
+ */
+int dir_exists(char *path);
 
 #endif

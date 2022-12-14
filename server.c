@@ -440,11 +440,11 @@ response_code register_transfer(client *c, char *filename, char *message)
 	// TODO Implementar!
 	for (int i = 0; i < nclients; i++)
 	{
-		if (clients->socket>0)
+		if (clients[i].socket>0)
 		{
-			if (EQUALS(filename,clients->active_transfer))
+			if (EQUALS(filename,clients[i].active_transfer))
 			{
-				strcpy("TRANSFER_DENIED!",message);
+				strcpy(message,"TRANSFER_DENIED!");
 				code = TRANSFER_DENIED;
 			}
 			
@@ -452,7 +452,7 @@ response_code register_transfer(client *c, char *filename, char *message)
 	}
 	if (code==TRANSFER_AUTHORIZED)
 	{
-		strcpy("TRANSFER_AUTHORIZED!",message);
+		strcpy(message,"TRANSFER_AUTHORIZED!");
 		strcpy(c->active_transfer,filename);
 	}
 	
