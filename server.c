@@ -212,9 +212,6 @@ int main(int argc, char *argv[])
 			finished = 1;
 			continue;
 		}
-		// Crear un hilo pasandole como parametro c (almacenado en un "arreglo")
-		// Registrar el nuevo cliente
-
 		// Seccion critica
 		down(&mutex);
 		client *new_client = add_client(c, &client_addr);
@@ -336,32 +333,31 @@ client *add_client(int c, struct sockaddr_in *addr)
 	client *new_client;
 
 	new_client = NULL;
-
-	// Es necesario aumentar la cantidad de clientes?
+	
 	if (nclients == maxclients)
 	{
 		client *new_clients;
 		maxclients += 5; // Abrir espacio para 5 clientes más
-		// Crear un nuevo arreglo con mayor capacidad
+		// Crea un nuevo arreglo con mayor capacidad
 		new_clients = (client *)malloc(maxclients * sizeof(client));
-		// Llenar el nuevo arreglo con 0
+		// Llena el nuevo arreglo con 0
 		memset(new_clients, 0, maxclients * sizeof(client));
 		if (nclients > 0)
 		{
-			// Copiar los datos del arreglo anterior al arreglo nuevo
+			// Copia los datos del arreglo anterior al arreglo nuevo
 			memcpy(new_clients, clients, nclients * sizeof(client));
-			// Liberar el arreglo anterior
+			// Libera el arreglo anterior
 			free(clients);
 		}
-		// Guardar el apuntador al arreglo
+		// Guarda el apuntador al arreglo
 		clients = new_clients;
 	}
-	// Buscar una posicion libre en el arreglo
+	// Busca una posicion libre en el arreglo
 	for (int i = 0; i < maxclients; i++)
 	{
 		if (clients[i].socket <= 0)
 		{
-			// Limpiar el espacio!
+			// Limpia el espacio
 			memset(&clients[i], 0, sizeof(client));
 			clients[i].socket = c;
 			clients[i].index = i;
@@ -377,9 +373,9 @@ client *add_client(int c, struct sockaddr_in *addr)
 #endif
 			}
 
-			// Guarar la referencia al nuevo cliente
+			// Guarda la referencia al nuevo cliente
 			new_client = &clients[i];
-			// Incrementar la cantidad de clientes registrados
+			// Incrementa la cantidad de clientes registrados
 			nclients++;
 			break;
 		}
@@ -389,12 +385,12 @@ client *add_client(int c, struct sockaddr_in *addr)
 
 void remove_client(client *c)
 {
-	// Borrar la informacion del cliente
+	// Borra la informacion del cliente
 	memset(c, 0, sizeof(client));
-	// Decrementar la cantidad de clientes conectados
+	// Decrementa la cantidad de clientes conectados
 	nclients--;
 	printf("Active clients remaining: %d\n", nclients);
-	// Liberar la memoria si la cantidad de clientes es cero
+	// Libera la memoria si la cantidad de clientes es cero
 	if (nclients == 0)
 	{
 		maxclients = 0;
@@ -413,20 +409,20 @@ void signal_handler(int sig)
         printf("\nTerminal cerrada!\n");
     }else if (sig == SIGTERM)
     {
-        printf("\nFuimonos!\n");
+        printf("\n Apagando amablemente.!\n");
     }else {
         printf("\nSeñal %d recibida\n",sig);
     }
     
-    // Informar que el servidor esta terminando
+    // Informa que el servidor esta terminando
 	finished = 1;
 
-	// Recorrer el arreglo de clientes, cerrando cada uno de los sockets activos
+	// Recorre el arreglo de clientes, cerrando cada uno de los sockets activos
 	for (int i = 0; i < nclients; i++)
 	{
 		close(clients[i].socket);
 	}
-	// Liberar el arreglo de clientes
+	// Libera el arreglo de clientes
 	free(clients);
 	printf("Server finished.\n");
 	exit(EXIT_SUCCESS);
@@ -437,7 +433,6 @@ response_code register_transfer(client *c, char *filename, char *message)
 	response_code code;
 	code = TRANSFER_AUTHORIZED;
 
-	// TODO Implementar!
 	for (int i = 0; i < nclients; i++)
 	{
 		if (clients[i].socket>0)
@@ -455,23 +450,12 @@ response_code register_transfer(client *c, char *filename, char *message)
 		strcpy(message,"TRANSFER_AUTHORIZED!");
 		strcpy(c->active_transfer,filename);
 	}
-	
-	// Buscar en el arreglo de clientes activos (socket > 0) diferentes al
-	// cliente actual, si el nom bre de la transferencia activa (active_transfer) es igual
-	// al nombre del archivo que este cliente desea transferir
-
-	// Si se encuentra algun cliente cuyo atributo active_transfer es igual a filename,
-	// el codigo es TRANSFER_DENIED.
-
-	// En caso que ningun cliente este transfiriendo un archivo con el mismo nombre,
-	// el codigo es TRANSFER_AUTHORIZED
 
 	return code;
 }
 
 void finalize_transfer(client *c)
 {
-	// TODO implementar!
-	// Limpiar el nombre de la transferencia activa
+	// Limpia el nombre de la transferencia activa
     memset(&c->active_transfer, 0, sizeof(char)*NAME_MAX);
 }
