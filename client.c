@@ -47,9 +47,9 @@ int main(int argc, char * argv[]) {
 		port = DEFAULT_PORT;
 	}
 
-	// Limbiar la estructura del manejador
+	// Limpia la estructura del manejador
     memset(&act, 0, sizeof(struct sigaction));
-	//Configurar e instalar el manejador de la señal
+	//Configura e instala el manejador de la señal
 	act.sa_handler = signal_handler;
 	// Interrupcion de teclado
     sigaction(SIGINT, & act, NULL);
@@ -72,7 +72,7 @@ int main(int argc, char * argv[]) {
 		perror("socket");
 	}
 
-	//Preparar la direccion para asociarla al socket
+	//Prepara la direccion para asociarla al socket
 	memset(&addr, 0, sizeof(struct sockaddr_in));
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
@@ -81,7 +81,7 @@ int main(int argc, char * argv[]) {
 #ifdef DEBUG
 	fprintf(stderr, "Connecting to %s, port=%d\n", ip, port);
 #endif
-	//2. Conectarse al servidor
+	// se Conecta al servidor
 	if (connect(s, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) != 0) {
 		perror("connect");
 		exit(EXIT_FAILURE);
@@ -96,12 +96,12 @@ int main(int argc, char * argv[]) {
 
 		memset(&r, 0, sizeof(request));
 
-		//Leer una linea de entrada estandar
+		//Lee una linea de entrada estandar
 
 		printf(">");
-		memset(comando, 0, BUFSIZ); //Rellenar con ceros el bufer
+		memset(comando, 0, BUFSIZ); //Rellena con ceros el bufer
 
-		//Leer maximo BUFSIZ - 1 caracteres de la entrada estandar
+		//Leer maximo BUFSIZ 
 		if (fgets(comando, BUFSIZ, stdin) == NULL) {
 			finished = 1;
 			continue;
@@ -114,11 +114,10 @@ int main(int argc, char * argv[]) {
 		}
 
 		if (strcmp(l->parts[0], "exit") == 0) {
-			//leer el comando y partir
-			//Enviar la solicitud al servidor
+			//lee el comando y parte
 			strcpy(r.operation, "exit");
 
-			//Enviar la solicitud al servidor
+			//Envia la solicitud al servidor
 			if (write(s, &r, sizeof(request)) != sizeof(request)) {
 				fprintf(stderr, "Error enviando la solicitud al servidor\n");
 				continue;
@@ -130,15 +129,13 @@ int main(int argc, char * argv[]) {
 			) {
 			strcpy(r.operation, l->parts[0]);
 			strcpy(r.filename, l->parts[1]);
-			//Enviar solicitud al servidor
+			//Envia solicitud al servidor
 			if (write(s, &r, sizeof(request)) != sizeof(request)) {
 				fprintf(stderr, "Error enviando la solicitud al servidor\n");
 				continue;
 			}
 
-			//Recibir informacion del archivo y el contenido
-			//La funcion receive_file valida si el servidor
-			//responde con un error si el archivo no existe
+			//Recibe informacion del archivo y el contenido
 			if (!receive_file(s, "client_files")) {
 				fprintf(stderr, "Error recibiendo %s\n", r.filename);
 			}
@@ -150,13 +147,13 @@ int main(int argc, char * argv[]) {
 
 			char ruta[PATH_MAX];
 
-			//Validar si el archivo a enviar existe
+			//Valida si el archivo a enviar existe
 			if (!file_exists(l->parts[1])) {
 				fprintf(stderr, "El archivo a enviar %s no existe\n", ruta);
 				continue;
 			}
 
-			//Enviar solicitud al servidor
+			//Envia solicitud al servidor
 			strcpy(r.operation, l->parts[0]);
 			strcpy(r.filename, l->parts[1]);
 
@@ -166,27 +163,25 @@ int main(int argc, char * argv[]) {
 			}
 
 #ifdef DEBUG
-			//Simular una espera aleatoria para probar transferencias simultaneas
+			//Simula una espera aleatoria para probar transferencias simultaneas
 			sleep(rand() % 20);
 #endif
 
 			response resp;
 
-			//Recibir la autorizacion del servidor
+			//Recibe la autorizacion del servidor
 			if (read(s, &resp, sizeof(response)) != sizeof(response)) {
 				fprintf(stdout, "Error recibiendo la respuesta del servidor\n");
 				continue;
 			}
 
-			//Validar si existe otra transferencia activa con el mismo nombre de archivo
+			//Valida si existe otra transferencia activa con el mismo nombre de archivo
 			if (resp.code == TRANSFER_DENIED) {
 				fprintf(stderr, "%s\n", resp.message);
 				continue;
 			}
 
-			//Enviar informacion del archivo y el contenido
-			//La funcion valida si el archivo no existe,
-			//En cuyo caso se envia size = -1
+			//Envia informacion del archivo y el contenido
 
 			if (!send_file(s, r.filename)) {
 				fprintf(stderr, "Error enviando %s\n", r.filename);
@@ -208,12 +203,12 @@ void signal_handler(int sig) {
         printf("\nTerminal cerrada!\n");
     }else if (sig == SIGTERM)
     {
-        printf("\nFuimonos!\n");
+        printf("\nApagadoooo!\n");
     }else {
         printf("\nSeñal %d recibida\n",sig);
     }
     
-    // Informar que el servidor esta terminando
+    // Informa que el servidor esta terminando
 	finished = 1;
 #ifdef DEBUG
 	fprintf(stderr, "Signal received, finishing\n");
